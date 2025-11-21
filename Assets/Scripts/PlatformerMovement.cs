@@ -10,12 +10,12 @@ using UnityEngine.InputSystem;
 // Gravity for the project is set in Unity at Edit -> Project Settings -> Physics2D -> Gravity Y
 
 [RequireComponent(typeof(Rigidbody2D), typeof(CircleCollider2D), typeof(CapsuleCollider2D))]
+[RequireComponent(typeof(Animator))]
 public class PlatformerMovement : MonoBehaviour
 {
     [SerializeField] private float maxSpeed = 10f;
     [SerializeField] private float jumpForce = 10f;
-    // [SerializeField] private float gravityMultiplier = 1;    //unused
-    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private float groundingForce = 1f;
 
     public bool controlEnabled { get; set; } = true; // You can edit this variable from Unity Events
     
@@ -43,7 +43,7 @@ public class PlatformerMovement : MonoBehaviour
         // Set gravity scale to 0 so player won't "fall" 
         rb.gravityScale = 0;
 
-        //animator = GetComponent<Animator>();
+        animator = GetComponent<Animator>();
     }
     
     void Update()
@@ -76,15 +76,8 @@ public class PlatformerMovement : MonoBehaviour
             // Has landed, play landing sound and trigger landing animation
         }
         wasGrounded = isGrounded;
-        
-        // Flip sprite according to direction (if a sprite renderer has been assigned)
-        if (spriteRenderer)
-        {
-            if (moveInput.x > 0.01f)
-                spriteRenderer.flipX = false;
-            else if (moveInput.x < -0.01f)
-                spriteRenderer.flipX = true;
-        }
+
+	animator.SetBool("isGrounded", isGrounded);
     }
 
     private void FixedUpdate()
@@ -94,6 +87,9 @@ public class PlatformerMovement : MonoBehaviour
         rb.linearVelocity = velocity;
         
         // Write movement animation code here. (Suggestion: send your current velocity into the Animator for both the x- and y-axis.)
+	animator.SetFloat("Speed", Mathf.Abs(velocity.x));
+	if (velocity.x < 0) animator.SetBool("isFacingLeft", true);
+	if (velocity.x > 0) animator.SetBool("isFacingLeft", false);
     }
 
     private bool IsGrounded()
@@ -114,7 +110,7 @@ public class PlatformerMovement : MonoBehaviour
         // Applies a set gravity for when player is grounded
         if (isGrounded && velocity.y < 0.0f)
         {
-            velocity.y = -1.0f;
+            velocity.y = -groundingForce;
         }
         // Updates fall speed with gravity if object isn't grounded
         else
